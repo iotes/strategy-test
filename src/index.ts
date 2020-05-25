@@ -35,7 +35,6 @@ const strategy: Strategy<StrategyConfig, DeviceTypes> = ({
 
   const deviceFactory = (): DeviceFactory<DeviceTypes> => {
     // DEVICE FACTORIES
-
     const createDeviceOne = async (deviceConfig: DeviceConfig<'DEVICE_ONE'>) => {
       // Do device set up here
       deviceSubscribe((state) => { res.dispatch(state) }, ['DEVICE_ONE'])
