@@ -7,14 +7,14 @@ const topology: TopologyMap<{}, DeviceTypes> = {
   devices: [
     {
       hostName: 'TEST_HOST',
-      type: 'DEVICE_ONE',
-      name: 'READER/1',
+      type: 'DEVICE_TYPE_ONE',
+      name: 'DEVICE_ONE',
       channel: 1,
     },
     {
       hostName: 'TEST_HOST',
-      type: 'DEVICE_TWO',
-      name: 'ENCODER/1',
+      type: 'DEVICE_TYPE_TWO',
+      name: 'DEVICE_TWO',
       channel: 2,
     },
   ],
