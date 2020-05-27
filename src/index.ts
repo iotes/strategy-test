@@ -7,17 +7,23 @@ import {
   createHostDispatchable,
   Store,
   maybePipe,
+  DeviceDispatchable,
 } from '@iotes/core'
 import { direction } from '@iotes/middleware-direction'
 import { createStore } from '@iotes/core/build/store'
 import { DeviceTypes, StrategyConfig } from './types'
 import { config } from './config'
 
-// Globals
-const res: Store = createStore({ channel: 'TEST' })
+// GLOBALS
+
+// Remote is a store that acts as a simulated host
+// which can be used in the test suite
+// e.g remote.dispatch from the test will send an incoming
+// message to this strategy
+const remote: Store = createStore({ channel: 'TEST' })
 const connectTime = 1
 
-// Strategy
+// STRATEGY
 const strategy: Strategy<StrategyConfig, DeviceTypes> = ({
   hostDispatch,
   deviceDispatch,
@@ -27,10 +33,10 @@ const strategy: Strategy<StrategyConfig, DeviceTypes> = ({
   hostConfig: HostConfig<StrategyConfig>,
   clientConfig: ClientConfig,
 ): Promise<DeviceFactory<DeviceTypes>> => {
-  // send any messages coming in to host subscribe on res
-  hostSubscribe((state: any) => { res.dispatch(state) }, null, [direction('O')])
+  // DISPATCH INCOMING CONNECTIONS
+  hostSubscribe((state: any) => { remote.dispatch(state) }, null, [direction('O')])
 
-  // Simulate async connection
+  // SIMULATE ASYNC CONNECTION
   await new Promise((resolve) => {
     setTimeout(() => {
       hostDispatch(createHostDispatchable(hostConfig.name, 'CONNECT', {}))
@@ -39,27 +45,29 @@ const strategy: Strategy<StrategyConfig, DeviceTypes> = ({
   })
 
   const deviceFactory = (): DeviceFactory<DeviceTypes> => {
+    // INIT HOOKS
     const applyPreDispatchHook = maybePipe(...hooks.device.preDispatchHooks)
 
+    // CREATE TEST DEVICE
+    const createTestDevice = <T extends string>(deviceName:T) => (
+      async (deviceConfig: DeviceConfig<T>) => {
+        deviceSubscribe((state) => {
+          remote.dispatch(applyPreDispatchHook(state))
+        }, [deviceName], [direction('O')])
+
+        remote.subscribe((state: DeviceDispatchable<any>) => {
+          deviceDispatch(state)
+        }, [deviceName])
+
+        return deviceConfig
+      }
+    )
+
     // DEVICE FACTORIES
-    const createDeviceOne = async (deviceConfig: DeviceConfig<'DEVICE_ONE'>) => {
-      deviceSubscribe((state) => {
-        res.dispatch(applyPreDispatchHook(state))
-      }, ['DEVICE_ONE'])
+    const createDeviceOne = createTestDevice('DEVICE_ONE')
+    const createDeviceTwo = createTestDevice('DEVICE_TWO')
 
-      return deviceConfig
-    }
-
-    const createDeviceTwo = async (deviceConfig: DeviceConfig<'DEVICE_TWO'>) => {
-      // Do device set up here
-      deviceSubscribe((state) => {
-        res.dispatch(applyPreDispatchHook(state))
-      }, ['DEVICE_TWO'])
-
-      return deviceConfig
-    }
-
-    // Return dictionary of device factories
+    // DICTIONARY OF DEVICE FACTORIES
     return {
       DEVICE_ONE: createDeviceOne,
       DEVICE_TWO: createDeviceTwo,
@@ -69,18 +77,19 @@ const strategy: Strategy<StrategyConfig, DeviceTypes> = ({
   return deviceFactory()
 }
 
-// Exports
-const createTestStrategy = (): [Store, Strategy<{}, DeviceTypes>] => [res, strategy]
+// UTILS
+const createTestStrategy = (): [Store, Strategy<{}, DeviceTypes>] => [remote, strategy]
 
 const wait = (time = connectTime) => new Promise(
   (resolve, _) => { setTimeout(() => resolve(), time) },
 )
 
+// EXPORTS
 export {
   createTestStrategy,
   config,
   wait,
 }
 
-// Export types
+// EXPORT TYPES
 export { DeviceTypes, StrategyConfig }

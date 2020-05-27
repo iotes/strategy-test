@@ -4,9 +4,12 @@ import {
   Strategy,
   createIotes,
   createDeviceDispatchable,
-  createHostDispatchable,
 } from '@iotes/core'
-import { direction } from '@iotes/middleware-direction'
+
+import {
+  direction,
+} from '@iotes/middleware-direction'
+
 import {
   createTestStrategy,
   config,
@@ -15,17 +18,18 @@ import {
   wait,
 } from '../src'
 
-import { testLifecycleHook } from './utils'
+import {
+  testLifecycleHook,
+} from '../src/lifecycleHook'
 
-
-// Global Variables
+// GLOBALS
 let remote: Store
 let strategy: Strategy<StrategyConfig, DeviceTypes>
 let iotes: Iotes
 
-// Test Suite
+// TEST SUITE
 describe('Test Strategy', () => {
-  // Pre Test
+  // PRE TEST
   beforeEach(() => {
     [remote, strategy] = createTestStrategy()
     iotes = createIotes({
@@ -35,7 +39,11 @@ describe('Test Strategy', () => {
     })
   })
 
-  // Tests
+  afterEach(() => {
+    iotes = null
+  })
+
+  // TESTS
   test('Test strategy simulates connect', async () => {
     let result: any = null
 
@@ -66,16 +74,43 @@ describe('Test Strategy', () => {
   test('Remote store allows dispatch of incoming data', async () => {
     let result: any = {}
 
-    const testDispatchable = createDeviceDispatchable('INTERNAL_TEST', 'UPDATE', { count: 0 })
+    const testDispatchable = createDeviceDispatchable('DEVICE_ONE', 'UPDATE', { count: 0 })
 
-    iotes.deviceSubscribe((state) => { result = state }, null, [direction('I')])
+    iotes.deviceSubscribe((state) => { result = state })
 
     await wait()
 
     remote.dispatch(testDispatchable)
 
-    expect(result).not.toHaveProperty('INTERNAL_TEST')
-    // We need to include remote in subscribe
-    // expect(result.REMOTE_TEST).toEqual(expect.objectContaining(testDispatchable.TEST))
+    expect(result.DEVICE_ONE).toEqual(expect.objectContaining(testDispatchable.DEVICE_ONE))
+  })
+
+  test('Remote store allows receiving of outgoing data', async () => {
+    let result: any = {}
+
+    const testDispatchable = createDeviceDispatchable('DEVICE_ONE', 'UPDATE', { count: 0 })
+
+    remote.subscribe((state) => { result = state })
+
+    await wait()
+
+    iotes.deviceDispatch(testDispatchable)
+
+    expect(result.DEVICE_ONE).toEqual(expect.objectContaining(testDispatchable.DEVICE_ONE))
+  })
+
+  test('Pre dispatch hooks are applied', async () => {
+    let result: any = {}
+
+    const testDispatchable = createDeviceDispatchable('DEVICE_ONE', 'UPDATE', { count: 0 })
+
+    remote.subscribe((state) => { result = state })
+
+    await wait()
+
+    iotes.deviceDispatch(testDispatchable)
+
+    expect(testDispatchable.DEVICE_ONE).not.toHaveProperty('@@iotes_test')
+    expect(result.DEVICE_ONE).toHaveProperty('@@iotes_test')
   })
 })
