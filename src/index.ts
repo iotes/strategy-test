@@ -49,7 +49,7 @@ const strategy: Strategy<StrategyConfig, DeviceTypes> = ({
     const applyPreDispatchHook = maybePipe(...hooks.device.preDispatchHooks)
 
     // CREATE TEST DEVICE
-    const createTestDevice = <T extends string>(deviceName:T) => (
+    const createTestDevice = <T extends string>(deviceName: string) => (
       async (deviceConfig: DeviceConfig<T>) => {
         deviceSubscribe((state) => {
           remote.dispatch(applyPreDispatchHook(state))
@@ -64,13 +64,13 @@ const strategy: Strategy<StrategyConfig, DeviceTypes> = ({
     )
 
     // DEVICE FACTORIES
-    const createDeviceOne = createTestDevice('DEVICE_ONE')
-    const createDeviceTwo = createTestDevice('DEVICE_TWO')
+    const createDeviceOne = createTestDevice<'DEVICE_TYPE_ONE'>('DEVICE_ONE')
+    const createDeviceTwo = createTestDevice<'DEVICE_TYPE_TWO'>('DEVICE_TWO')
 
     // DICTIONARY OF DEVICE FACTORIES
     return {
-      DEVICE_ONE: createDeviceOne,
-      DEVICE_TWO: createDeviceTwo,
+      DEVICE_TYPE_ONE: createDeviceOne,
+      DEVICE_TYPE_TWO: createDeviceTwo,
     }
   }
 
