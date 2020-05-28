@@ -91,6 +91,5 @@ export {
   wait,
 }
 
-
 // EXPORT TYPES
 export { DeviceTypes, StrategyConfig }
