@@ -53,8 +53,9 @@ const strategy: Strategy<StrategyConfig, DeviceTypes> = ({
       async (deviceConfig: DeviceConfig<T>) => {
         deviceSubscribe((state) => {
           remote.dispatch(applyPreDispatchHook(state))
-        }, [deviceName], [direction('O')])
+        }, [deviceName], [direction('B')])
 
+        // Check loopback test
         remote.subscribe((state: DeviceDispatchable<any>) => {
           deviceDispatch(state)
         }, [deviceName])
