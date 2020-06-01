@@ -1,6 +1,6 @@
 {
   "name": "@iotes/strategy-test",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A strategy for testing iotes",
   "repository": "git://github.com/iotes/strategy-test.git",
   "homepage": "https://iotes.dev",
